@@ -1,0 +1,42 @@
+\begin{table*}[t]
+\centering
+\caption{Mean configuration-level explained variance ($R^2$, expressed in percent) of linear power models based on MFU and GPU Utilization. Values are reported as mean $\pm$ standard deviation across benchmark configurations within each parameter slice.}
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Parameter} & \textbf{MFU $R^2$} & \textbf{GPU Utilization $R^2$} & \textbf{$n_{\text{configs}}$} & \textbf{$n_{\text{samples}}$}\\
+\hline
+\multicolumn{5}{l}{\textbf{Batch size}} \\
+\hline
+1   & $16.7 \pm 18.2\,\%$ & $12.3 \pm 16.0\,\%$ & 336 & 13228\\
+4   & $14.7 \pm 15.8\,\%$ & $10.1 \pm 12.7\,\%$ & 335 & 13200\\
+8   & $14.6 \pm 15.0\,\%$ & $10.5 \pm 12.4\,\%$ & 336 & 13200\\
+16  & $16.2 \pm 15.8\,\%$ & $10.6 \pm 12.8\,\%$ & 336 & 13200\\
+32  & $15.6 \pm 15.5\,\%$ & $10.7 \pm 11.9\,\%$ & 336 & 13200\\
+64  & $14.3 \pm 16.5\,\%$ & $9.1 \pm 11.5\,\%$ & 336 & 13200\\
+128 & $12.3 \pm 15.9\,\%$ & $4.4 \pm 5.1\,\%$  & 328 & 13326\\
+\hline
+\multicolumn{5}{l}{\textbf{Context window}} \\
+\hline
+512  & $14.8 \pm 16.2\,\%$ & $9.7 \pm 12.3\,\%$ & 1172 & 58690\\
+2048 & $15.0 \pm 16.2\,\%$ & $9.8 \pm 12.6\,\%$ & 1171 & 58614\\
+\hline
+\multicolumn{5}{l}{\textbf{Dtype}} \\
+\hline
+bfloat16 & $16.5 \pm 16.9\,\%$ & $11.2 \pm 12.6\,\%$ & 672 & 33600\\
+float16  & $12.9 \pm 14.2\,\%$ & $8.5 \pm 11.7\,\%$   & 840 & 42000\\
+float32  & $15.8 \pm 17.1\,\%$ & $9.9 \pm 12.7\,\%$  & 831 & 41704\\
+\hline
+\multicolumn{5}{l}{\textbf{Hardware}} \\
+\hline
+NVIDIA A100   & $10.3 \pm 11.1\,\%$ & $8.0 \pm 9.0\,\%$  & 504 & 25200\\
+NVIDIA L40    & $7.6 \pm 11.1\,\%$   & $8.0 \pm 9.0\,\%$  & 504 & 25200\\
+Quadro 5000   & $11.4 \pm 14.3\,\%$ & $6.3 \pm 8.2\,\%$  & 336 & 16800\\
+RTX 4070 Ti   & $29.5 \pm 17.9\,\%$ & $18.2 \pm 15.0\,\%$ & 504 & 25354\\
+AMD MI210     & $14.6 \pm 16.3\,\%$ & $40.9 \pm 29.1\,\%$ & 495 & 24750\\
+\hline
+\end{tabular}
+\label{tab:mfu_util_internal_power_per_config}
+\end{table*}
