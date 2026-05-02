@@ -49,22 +49,22 @@ The paper received mixed reviews (1, -1, -1, 1). The following points summarize 
 ## Prioritized TODO List for MASCOTS '26
 
 ### 1. Methodology & Transparency (High Priority)
-- [ ] **Define Convergence:** Add a formal, mathematical definition of the convergence criterion (e.g., standard error threshold over a sliding window).
+- [x] **Define Convergence:** SEM < 1% of mean over a 20-sample sliding window (Section 3.1).
 - [ ] **Fix/Replace Table 2:** Address the "low $R^2$ / high variance" issue. Consider using MAPE or Coefficient of Variation (CV) for steady-state analysis.
 - [ ] **Hardware Table:** Add a table with host system specifications (CPU, RAM, OS version, driver versions) for all 5 testbeds.
-- [ ] **Equation 1 Cleanup:** Define $FLOPS_{max}$ (peak theoretical for the specific dtype) and $FLOPS_{req}$ (ops per token based on model parameters).
-- [ ] **AMD MI210 Explanation:** Clarify that ROCm's utilization metric is a binary activity counter and why it fails as a predictor.
+- [x] **Equation 1 Cleanup:** $FLOPS_{max}$ and $FLOPS_{req}$ are defined in Section 2.1.2.
+- [x] **AMD MI210 Explanation:** ROCm's `GRBM_COUNT` is a binary activity counter — explained in Section 4.1.
 - [ ] **Repository Cleanup:** Add the Python/Hydra benchmarking pipeline to the public repository.
 
 ### 2. Narrative & Content (Medium Priority)
 - [ ] **Strengthen the "Story":** Better link the telemetry validation (Section 4.1) to the utilization experiments. Frame validation as a prerequisite.
 - [ ] **Compute vs. Memory Bound:** Discuss the impact of arithmetic intensity. Add a section or paragraph exploring cases where memory bandwidth is the bottleneck (and MFU fails).
-- [ ] **Terminology Pass:** Explicitly define "compute-bound" vs "memory-bound" in the methodology.
+- [x] **Terminology Pass:** "compute-bound" and "memory-bound" are defined in Section 2.1.2.
 - [ ] **Figure Polish:** Add legends to all plots. Ensure consistent color mapping across figures and describe it in the text.
 
 ### 3. Technical Fixes (Low Priority)
-- [ ] **Add Missing Citations:** `calflops`, `Hydra`, `AccelWattch`.
-- [ ] **RTX 4070 Ti Noise:** Discuss the noise characteristics of workstation GPUs versus data-center accelerators.
+- [x] **Add Missing Citations:** `calflops` (Section 2.1.2 and 3.2), `Hydra` (Section 3.1), `AccelWattch` (Related Work).
+- [x] **RTX 4070 Ti Noise:** Workstation-level noise characteristics discussed in Section 4.1 and Section 5.
 
 ---
 
