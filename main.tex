@@ -1,14 +1,15 @@
-\documentclass[runningheads]{llncs}
-\usepackage[T1]{fontenc}
-\usepackage{booktabs}
+\documentclass[10pt,conference,letterpaper]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
 \usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
 \usepackage{array}
 \usepackage{longtable}
-\usepackage{amsmath}
-\usepackage{footmisc}
-\usepackage{tikz}
-\usepackage{xcolor}
-\usepackage{soul}
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{gensymb}
@@ -16,13 +17,12 @@
 \usepackage{xurl}
 \usepackage{rotating}
 \usepackage[euler]{textgreek}
-\usetikzlibrary{positioning,arrows.meta,shapes.misc, fit}
-\usepackage[numbers]{natbib}
-\usepackage[colorlinks=true, allcolors=blue]{hyperref}
-\usepackage[english]{babel}
-%\usepackage[a4paper,top=3cm,bottom=3cm,left=4cm,right=4cm,marginparwidth=1.75cm]{geometry}
 \usepackage{placeins}
 \usepackage{float}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
 \newcommand{\takeaway}[1]{%
     \par\medskip
@@ -38,24 +38,24 @@
     \par\medskip
 }
 
-
 \begin{document}
 
 \title{On the Predictive Power of Compute Utilization Metrics for GPU Power Modeling}
-\titlerunning{On the Predictive Power of Utilization Metrics for GPU Power Modeling}
 
-\author{Niklas Enskat \and Philipp Wiesner \and Odej Kao}
+\author{\IEEEauthorblockN{Niklas Enskat}
+\IEEEauthorblockA{\textit{Technische Universität Berlin} \\
+enskat@campus.tu-berlin.de}
+\and
+\IEEEauthorblockN{Philipp Wiesner}
+\IEEEauthorblockA{\textit{Technische Universität Berlin} \\
+wiesner@tu-berlin.de}
+\and
+\IEEEauthorblockN{Odej Kao}
+\IEEEauthorblockA{\textit{Technische Universität Berlin} \\
+odej.kao@tu-berlin.de}
+}
 
-\authorrunning{Enskat et al.}
-
-\institute{Technische Universität Berlin\\
-\email{enskat@campus.tu-berlin.de}, \email{\{wiesner, odej.kao\}@tu-berlin.de}}
-
-\maketitle      
-
-%###############################
-% This work investigates whether compute-centric utilization metrics can serve as portable and reliable predictors of GPU power consumption, particularly in performance modeling and simulation settings where hardware-level utilization signals are unavailable.
-%###############################
+\maketitle
 
 \begin{abstract}
 GPU power consumption is a key factor in the cost and sustainability of AI workloads, yet practical power modeling remains difficult.
@@ -65,10 +65,11 @@ Using a reproducible benchmarking pipeline, we evaluate MFU and, where available
 Both metrics exhibit an approximately linear relationship with power.
 GPU Utilization provides more robust global predictions across heterogeneous configurations, while MFU shows stronger predictive accuracy within stable, compute-bound regimes.
 Our results establish MFU as a portable alternative suitable for analytical models and simulators where hardware utilization counters are unavailable.
-\keywords{GPU power modeling, energy efficiency, portability}
 \end{abstract}
 
-%###############################################################################
+\begin{IEEEkeywords}
+GPU power modeling, energy efficiency, portability
+\end{IEEEkeywords}
 
 \section{Introduction}
 The rapid progress of artificial intelligence (AI) has led to increasingly larger and more energy-demanding models~\cite{yang-2024B}. Training and deploying such models relies heavily on GPU-accelerated infrastructures in data centers and supercomputing environments~\cite{fernandez-2024,pope-2022}, where
@@ -96,9 +97,7 @@ We make the following \emph{contributions}:
 
 Accurate power measurement is essential for any systematic analysis. 
 Most studies rely on internal GPU telemetry due to its accessibility~\cite{cornelius-2025}, yet software-reported power can deviate from external measurements depending on workload and sampling behavior~\cite{yang-2024B}. 
-We therefore validate software-reported power against external hardware measurements where possible, and then study utiliza\-tion-based power modeling.
-
-%###############################################################################
+We therefore validate software-reported power against external hardware measurements where possible, and then study utilization-based power modeling.
 
 \section{Background}\label{Background}
 Modern LLM training workloads impose sustained high computational demand and consequently high GPU power consumption. Understanding how workload performance metrics relate to energy behavior is therefore essential for both efficient system operation and predictive performance modeling. This section introduces the utilization metrics commonly used to characterize efficiency and discusses their limitations with respect to robustness and applicability. Then it outlines approaches to GPU power measurements and estimation. 
@@ -133,11 +132,6 @@ MFU is designed to reflect effective training progress rather than total execute
 
 External hardware power meters can provide reference measurements with a higher accuracy at component or node level~\cite{yang-2024A, jay-2023}, yet their deployment requires dedicated instrumentation and does not scale easily to large clusters. Analytical and statistical models may therefore be used to estimate power from hardware activity counters and performance metrics~\cite{lang-2013}. However, such approaches depend on calibration data and often rely on architecture-specific telemetry signals, limiting their generalizability across devices~\cite{yang-2024A}.
 
-% These limitations motivate investigating whether compute-centric abstractions such as MFU provide a more robust and transferable basis for predicting GPU power consumption across training workloads and hardware platforms.
-
-
-%###############################################################################
-
 \section{Methodology}\label{methodology}
 
 % \subsection{Experimental Design}\label{exp. design}
@@ -157,21 +151,17 @@ For each configuration, we record throughput in tokens per second, MFU derived f
 
 All other parameters are held constant to isolate compute behavior. These include optimizer choice, learning rate, fixed prompt, attention implementation, sampling interval of one second, and single-GPU execution. Gradient scaling is disabled to ensure consistent behavior across precision modes. Each run consists of an optional warmup iteration followed by steady-state sampling until convergence.
 
-%###############################################################################
-
 \section{Experiments}\label{results}
 This section evaluates how well MFU and GPU Utilization predict GPU power consumption across hardware platforms and workload configurations. We first validate software-reported power against external measurements (where available), then report predictor--power relationships, error characteristics, and sensitivity to experimental variables.
 
 \subsection{Validation of Software-Based Power Measurements}\label{sec:power-validation}
-\begin{figure}[hbt!]
+\begin{figure*}[hbt!]
     \centering
-    \vspace{-3mm}
     \includegraphics[width=\textwidth]{fig1_external_vs_internal_power.pdf}
-    \vspace{-5mm}
     \caption{The relationship between (software-based) GPU-reported and (hardware-based) external power measurements for the NVIDIA L40 and NVIDIA Quadro RTX 5000 show a strong linear relationship.}
     \label{fig:Ex. vs Int. Power by Hardware}
-\end{figure}
-Reliable power measurements are a prerequisite for utilization-based modeling. For two systems (Quadro RTX 5000 and NVIDIA L40), we additionally collected external node-level power readings and compared them against software-reported GPU power. As presented in Figure \ref{fig:Ex. vs Int. Power by Hardware}, across the monitored hardware, internal GPU-reported power followed a stable, strongly linear relationship with the external measurements, supporting the use of internal telemetry as the primary power signal in the remaining experiments.
+\end{figure*}
+Reliable power measurements are a prerequisite for utilization-based modeling. For two systems (Quadro RTX 5000 and NVIDIA L40), we additionally collected external node-level power readings and compared them against software-reported GPU power. As presented in Fig. \ref{fig:Ex. vs Int. Power by Hardware}, across the monitored hardware, internal GPU-reported power followed a stable, strongly linear relationship with the external measurements, supporting the use of internal telemetry as the primary power signal in the remaining experiments.
 
 \takeaway{Internal software-based power measurements align closely with externally validated hardware-reported measurements for both GPUs.}
 
@@ -214,33 +204,31 @@ To assess predictor behavior within fixed compute regimes, a separate linear reg
 At this finer granularity, both predictors show modest explanatory power (expected within a single steady-state phase), but MFU consistently achieves higher mean $R^2$ than GPU Utilization across parameter slices. Dispersion is dominated by platform noise: the workstation-based RTX 4070 Ti shows wider spread than the dedicated-node systems.
 
 \vspace{2mm}
-\takeaway{GPU Utilization is the better single predictor for global models spanning heterogeneous configurations, while MFU is preferable within fixed, compute-bound regimes and in simulation settings where hardware utilization counters are unavailable. For simulator-based what-if studies~\cite{agrawal2024vidur,ozcan-2025}, this implies that MFU-to-power mappings are most reliable for homogeneous, compute-bound scenarios (fixed model family, stable precision, and consistent batching). For heterogeneous sweeps, a single global MFU model is less robust and should be replaced by regime-specific calibration (e.g., per dtype or per configuration class) or paired with additional simulated signals when available.}
+\takeaway{GPU Utilization is the better single predictor for global models spanning heterogeneous configurations, while MFU is preferable within fixed, compute-bound regimes and in simulation settings where hardware utilization counters are unavailable. For simulator-based what-if studies~\cite{agrawal-2025,ozcan-2025}, this implies that MFU-to-power mappings are most reliable for homogeneous, compute-bound scenarios (fixed model family, stable precision, and consistent batching). For heterogeneous sweeps, a single global MFU model is less robust and should be replaced by regime-specific calibration (e.g., per dtype or per configuration class) or paired with additional simulated signals when available.}
 
 \subsection{Prediction Error Characteristics}\label{Prediction Error Characteristics}
-\begin{figure}[hbt!]
+\begin{figure*}[hbt!]
     \centering
     \includegraphics[width=\textwidth]{fig2_prediction_error.pdf}
-    \vspace{-8mm}
     \caption{Absolute percentage error distributions for linear power models based on MFU and GPU Utilization. MFU exhibits stronger high-percentile errors for NVIDIA compared to GPU Utilization, while AMD's GPU Utilization measurements show significantly more high-percentile errors than MFU.}
     \label{fig:Prediction Error Figure}
-\end{figure}
+\end{figure*}
 
-We define prediction error as the absolute percentage deviation between observed GPU power and power predicted by a per-GPU linear model fitted on raw samples. Figure~\ref{fig:Prediction Error Figure} summarizes the resulting error distributions.
+We define prediction error as the absolute percentage deviation between observed GPU power and power predicted by a per-GPU linear model fitted on raw samples. Fig. \ref{fig:Prediction Error Figure} summarizes the resulting error distributions.
 
 Across all accelerators, GPU Utilization yields lower median and mean errors than MFU, and a tighter distribution. On the NVIDIA A100, GPU Utilization reaches a mean absolute percentage error of 7.50\% versus 11.35\% for MFU (medians: 6.63\% versus 9.95\%). However, MFU remains broadly usable: the median gap is moderate, and the main difference is in the tails. The 95th-percentile absolute error for GPU Utilization stays below 26\% on all devices, while MFU can exceed 30\% and reaches 57.94\% on the Quadro 5000 in the worst case. These outliers occur more frequently under reduced precision (especially float16), indicating higher sensitivity of MFU to efficiency fluctuations in those regimes.
 
 \takeaway{GPU Utilization is the more robust single-variable predictor under heterogeneous conditions; MFU is a viable portable proxy but benefits from uncertainty-aware interpretation (or additional context) when worst-case errors matter.}
 
 \subsection{Relationship Across Independent Variables}\label{Relationship Across Variables}
-We analyze how numerical precision (dtype), context window, batch size, warmup iterations, and cooldown phases affect predictor values and their relationship to power. Figure~\ref{fig:Predictors across DTypes} shows that both predictors maintain an approximately linear relationship with power across dtypes. GPU Utilization typically achieves higher $R^2$ than MFU; the main exception is RTX 4070 Ti under float32 ($R^2 = 0.5223$), likely due to runtime noise. Reduced-precision formats shift predictor distributions and can change slopes, with MFU often showing stronger dtype-dependent scaling.
+We analyze how numerical precision (dtype), context window, batch size, warmup iterations, and cooldown phases affect predictor values and their relationship to power. Fig. \ref{fig:Predictors across DTypes} shows that both predictors maintain an approximately linear relationship with power across dtypes. GPU Utilization typically achieves higher $R^2$ than MFU; the main exception is RTX 4070 Ti under float32 ($R^2 = 0.5223$), likely due to runtime noise. Reduced-precision formats shift predictor distributions and can change slopes, with MFU often showing stronger dtype-dependent scaling.
 
-\begin{figure}[hbt!]
+\begin{figure*}[hbt!]
     \centering
-    \includegraphics[width=\textwidth, trim={2cm 0 1cm 0}, clip]{fig3_mfu_gpuutil_vs_power.pdf}
-    \vspace{-8mm}
+    \includegraphics[width=\textwidth]{fig3_mfu_gpuutil_vs_power.pdf}
     \caption{MFU and GPU Utilization versus GPU power, split by numerical precision. GPU Utilization (typically in the range of 40-100\,\%) shows stronger alignment to linear fits, while MFU measurements (typically in the range of 0-45\,\%~\cite{chowdhery-2023}) are fundamentally influenced by dtype.}
     \label{fig:Predictors across DTypes}
-\end{figure}
+\end{figure*}
 
 Context window size (512 versus 2048 tokens) shows no meaningful effect on predictor distributions; warmup and cooldown phases likewise have negligible impact within the evaluated range.
 Batch size introduces a pronounced monotonic increase in both predictors across all platforms. From batch size 1 to 128, GPU Utilization changes by up to 53.5\% on the A100 and MFU by up to 34.7\% on the Quadro 5000.
@@ -248,8 +236,6 @@ Batch size introduces a pronounced monotonic increase in both predictors across 
 \vspace{1mm}
 \takeaway{Precision and batch size materially change predictor values (and thus power estimates), while context length and warmup/cooldown do not. Cross-configuration models should therefore account for regime changes, especially across dtypes.}
 
-
-%###############################################################################
 
 \section{Limitations}\label{Limitations}
 While the experimental design of this study enables consistent comparisons across predictors of and hardware platforms, several limitations constrain the generalizability of the findings.
@@ -259,8 +245,6 @@ The study also evaluates mostly NVIDIA GPUs, spanning from consumer-level to dat
 Additionally, the RTX 4070 Ti was measured in a workstation environment, rather than in a dedicated compute node, which introduced uncontrolled background activity and runtime interference. While this setup provides a realistic depiction of consumer-grade deployment conditions, it increases result variability and may reduce comparability with more controlled systems.
 
 
-
-%###############################################################################
 
 \section{Related Work}\label{related work}
 GPU power consumption is closely tied to workload-dependent hardware activity. Previous work has analyzed this relationship through hardware-exposed utilization metrics, telemetry at system scale, and compute-centric abstractions. However, existing approaches often rely on vendor-specific instrumentation, limiting portability across architectures and preventing direct use in performance modeling or simulation frameworks.
@@ -280,23 +264,14 @@ The limitations of hardware-dependent utilization metrics become particularly ev
 
 To enable energy estimation, Özcan et al.~\cite{ozcan-2025} extend this simulation framework with utilization-derived power models that infer energy demand from execution characteristics. However, these approaches rely on implicit utilization proxies rather than explicitly defined, portable metrics. Since hardware-exposed counters are unavailable in simulation, the choice of utilization abstraction remains underspecified.
 
-% This highlights the structural gap, that existing utilization metrics are either hardware-specific and non-portable, or compute-centric but insufficiently validated as predictors of GPU power consumption.
-
-
-%###############################################################################
-
 \section{Conclusion}\label{Conclusion}
 This work evaluated MFU and GPU Utilization as predictors of GPU power consumption for generative AI workloads across four hardware platforms, with an additional GPU included for MFU-only reference measurements. Both metrics showed a clear and approximately linear relationship with GPU power, confirmed by external validation where available. When aggregating heterogeneous configurations, GPU Utilization remained the more robust single predictor, exhibiting higher explained variance and lower worst-case errors. In contrast, MFU consistently outperformed GPU Utilization within fixed, compute-bound configurations, where throughput dominates runtime behavior.
 
 These results highlight that the relative usefulness of both metrics is inherently context-dependent. 
 GPU Utilization is preferable in diverse or unstable execution regimes, while MFU offers stronger predictive accuracy when configurations are controlled and compute saturation is stable. 
 Importantly, because MFU derives from high-level execution properties rather than hardware telemetry, it provides a practical and portable alternative for analytical models, simulators, and performance studies where GPU Utilization is unavailable. 
-% We conclude that MFU enables hardware-agnostic power estimation while preserving meaningful alignment with measured energy behavior.
 
-%###############################################################################
-
-\bibliographystyle{splncs04}
+\bibliographystyle{IEEEtran}
 \bibliography{sources}
-
 
 \end{document}
