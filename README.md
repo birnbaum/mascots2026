@@ -49,8 +49,8 @@ The paper received mixed reviews (1, -1, -1, 1). The following points summarize 
 ## Prioritized TODO List for MASCOTS '26
 
 ### 1. Methodology & Transparency (High Priority)
-- [x] **Define Convergence:** SEM < 1% of mean over a 20-sample sliding window (Section 3.1).
-- [ ] **Fix/Replace Table 2:** Address the "low $R^2$ / high variance" issue. Consider using MAPE or Coefficient of Variation (CV) for steady-state analysis.
+- [x] **Define Convergence:** 95% CI half-width within 5% of running mean (`1.96·SEM/mean ≤ 0.05`) on both MFU and GPU Utilization, cumulative, min. 50 samples, capped at 500 (Section 3.1). Verified against `benchmark.py` `ConvergenceChecker`.
+- [x] **Fix/Replace Table 2:** Restructured by hardware/dtype/batch/ctx; AMD MI210 excluded from the GPU Util column (binary GRBM signal); `n_MFU` / `n_Util` columns make the asymmetric coverage explicit. Caption enumerates the three causes of count variation.
 - [ ] **Hardware Table:** Add a table with host system specifications (CPU, RAM, OS version, driver versions) for all 5 testbeds.
 - [x] **Equation 1 Cleanup:** $FLOPS_{max}$ and $FLOPS_{req}$ are defined in Section 2.1.2.
 - [x] **AMD MI210 Explanation:** ROCm's `GRBM_COUNT` is a binary activity counter — explained in Section 4.1.
