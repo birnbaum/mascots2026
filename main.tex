@@ -50,10 +50,6 @@ enskat@campus.tu-berlin.de}
 \IEEEauthorblockN{Philipp Wiesner}
 \IEEEauthorblockA{\textit{Technische Universität Berlin} \\
 wiesner@tu-berlin.de}
-\and
-\IEEEauthorblockN{Odej Kao}
-\IEEEauthorblockA{\textit{Technische Universität Berlin} \\
-odej.kao@tu-berlin.de}
 }
 
 \maketitle
@@ -219,7 +215,7 @@ Dispersion is dominated by platform noise: the workstation-based RTX 4070 Ti sho
 \subsection{Prediction Error Characteristics}\label{Prediction Error Characteristics}
 \begin{figure*}[t]
     \centering
-    \includegraphics[width=\textwidth]{prediction_error.pdf}
+    \includegraphics[width=\textwidth]{figures/prediction_error.pdf}
     \caption{Absolute percentage error distributions for per-GPU linear power models based on MFU (blue) and GPU~Utilization (orange), one panel per accelerator. The MI210 has only an MFU box because its GPU~Utilization signal is binary (Section~\ref{Predictor Performance}); the empty NVIDIA~L4 panel is a placeholder for ongoing measurements.}
     \label{fig:Prediction Error Figure}
 \end{figure*}
@@ -237,7 +233,7 @@ GPU Utilization typically achieves higher $R^2$ than MFU; the main exception is 
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{predictor_vs_power.pdf}
+    \includegraphics[width=\columnwidth]{figures/predictor_vs_power.pdf}
     \caption{MFU (left) and GPU~Utilization (right) versus internal GPU power, with a shared $y$-axis. Color encodes numerical precision (\textit{blue}: float32, \textit{orange}: float16, \textit{green}: bfloat16); marker shape distinguishes hardware. Lines show per-dtype OLS fits. The MI210 appears only in the MFU panel because its GPU~Utilization signal is binary (Section~\ref{Predictor Performance}).}
     \label{fig:Predictors across DTypes}
 \end{figure}
@@ -288,7 +284,7 @@ Importantly, because MFU derives from high-level execution properties rather tha
 \section{Power Measurement Validation}\label{sec:power-validation}
 \begin{figure}[hbt!]
     \centering
-    \includegraphics[width=\columnwidth]{external_vs_internal_power.pdf}
+    \includegraphics[width=\columnwidth]{figures/external_vs_internal_power.pdf}
     \caption{Validating ground-truth reliability: Internal GPU-reported vs. external hardware-based power measurements for NVIDIA L40 and Quadro RTX 5000. Each color represents a distinct GPU model with its corresponding linear fit.}
     \label{fig:Ex. vs Int. Power by Hardware}
 \end{figure}
