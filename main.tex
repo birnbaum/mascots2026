@@ -42,7 +42,7 @@
 
 \begin{document}
 
-\title{Evaluating MFU as a Portable Power Proxy for Energy-Aware LLM Training Simulation}
+\title{Evaluating MFU as a Portable Power Proxy for Energy-Aware LLM Simulation}
 
 
 \author{\IEEEauthorblockN{Niklas Enskat}
@@ -57,9 +57,9 @@ wiesner@tu-berlin.de}
 \maketitle
 
 \begin{abstract}
-High-fidelity performance simulators are essential for designing and configuring efficient AI systems, yet they often lack the ability to predict power consumption.
+High-fidelity performance simulators are essential for designing and configuring efficient AI systems, yet today's tools lack the ability to predict power consumption.
 This is due to a telemetry gap: simulators cannot access hardware-level utilization counters that are typically used for power modeling.
-This work evaluates whether Model FLOPS Utilization (MFU), an analytical metric relating achieved throughput to peak hardware capability, can serve as a portable, software-defined predictor of GPU power for large language model (LLM) training.
+This work evaluates whether Model FLOPs Utilization (MFU), an analytical metric relating achieved throughput to peak hardware capability, can serve as a portable, software-defined predictor of GPU power for training large language models.
 Across 504 training configurations on five GPUs from NVIDIA and AMD, we show that a linear MFU-based power model fits every device ($R^2$ 0.68--0.84), including the AMD MI210 where the available utilization counter is a binary activity flag and admits no linear fit at all.
 The fitted slope is hardware-specific by construction, since MFU is peak-FLOPS-normalized.
 The model class itself, however, transfers across vendors and requires only a one-shot per-GPU calibration.
@@ -73,30 +73,32 @@ GPU power modeling, energy-efficient AI, LLM simulation, MFU
 \section{Introduction}
 The rapid progress of artificial intelligence (AI) has led to increasingly larger and more energy-demanding models~\cite{yang-2024B}. Training and deploying such models relies heavily on GPU-accelerated infrastructures, where GPUs have become the backbone of modern AI systems~\cite{jahanshahi-2020}.
 As AI workloads contribute a growing share of global data-center electricity use~\cite{international-energy-agency-2025}, there is an intensifying need for energy-aware system design and predictive performance modeling~\cite{katsenou-2024, google-2024}.
-High-fidelity simulators and analytical models are the primary tools used by researchers and system architects to explore "what-if" scenarios for future AI clusters, such as optimizing scheduling policies or evaluating different hardware parallelization strategies.
+High-fidelity simulators and analytical models are the primary tools used by researchers and system architects to explore "what-if" scenarios for future AI clusters, such as optimizing scheduling policies or evaluating different hardware parallelization strategies~\cite{agrawal2024vidur}.
 
-However, a fundamental challenge remains: predicting the power consumption of simulated workloads. Existing power models typically rely on hardware-level telemetry, such as GPU Utilization, which represents an aggregate measure of device activity reported by the hardware during execution~\cite{antarctica-2025, bridges-2016}.
-While useful for operational monitoring, these metrics present a "telemetry gap" for simulation and performance modeling. 
-First, hardware-defined counters are only available *after* code execution on physical hardware, making them inaccessible during the design or simulation phase. 
-Second, these metrics are vendor-specific (e.g., NVIDIA's NVML vs. AMD's ROCm), limiting the portability of derived power models across different architectural generations.
+However, predicting the power consumption of simulated AI workloads remains a fundamental challenge. Existing power models typically rely on hardware-level telemetry, such as GPU Utilization, which represents an aggregate measure of device activity reported by the hardware during execution~\cite{antarctica-2025, bridges-2016}.
+While useful for operational monitoring, these metrics present a telemetry gap for simulation and performance modeling. 
+First, hardware-defined counters are only available \emph{after} code execution on physical hardware, making them inaccessible during the design or simulation phase. 
+Second, these metrics are vendor-specific (e.g., NVIDIA's NVML vs. AMD's ROCm), limiting the portability of derived power models across different providers or architectural generations.
 
-A recently introduced yet already widely adopted performance metric for generative AI systems is Model FLOPS Utilization (MFU)~\cite{chowdhery-2023}. 
+A recently introduced yet already widely adopted performance metric for generative AI systems is Model FLOPs Utilization (MFU)~\cite{chowdhery-2023}. 
 Unlike hardware counters, MFU is an analytical metric that relates observed throughput to the theoretical peak compute capacity required per token. 
 Because MFU is derived from the model structure and high-level execution parameters, it can be calculated by simulators (e.g., Microsoft's Vidur~\cite{agrawal-2025}) without access to physical hardware. 
 While MFU has been proposed as a candidate input for power modeling in these settings~\cite{ozcan-2025}, its predictive value and robustness across diverse hardware have not been systematically evaluated.
 
 This paper investigates whether MFU can serve as a reliable, portable, and software-defined proxy for GPU power consumption.
-For LLM training---which is predominantly compute-bound---MFU captures the compute saturation that drives power consumption.
+For LLM training, which is predominantly compute-bound, MFU captures the compute saturation that drives power consumption.
 We validate MFU against ground-truth hardware measurements, providing a portable methodology for energy-aware simulation without vendor-specific telemetry.
 
-\noindent
 We make the following \emph{contributions}:
 \begin{itemize}
     \item A linear MFU-power model fits every GPU we measure ($R^2$ 0.68--0.84), including AMD MI210 where GPU Utilization is binary and cannot be fit.
     \item The slope is hardware-specific (MFU is peak-FLOPS-normalized), but the model class transfers. Conditioning on dtype and batch size alone drops within-cell MAPE from $\sim$10\,\% to $\sim$1\,\%.
     \item At batch~1, MFU collapses below 1.3\,\% while power stays at $\sim$60\,\% of the batch-128 level. This marks the scope boundary of an MFU-based proxy.
 \end{itemize}
-\noindent Our benchmarking pipeline and data are publicly available to support reproducible energy-aware simulation studies: \url{https://github.com/dos-group/gpu_power_benchmark}. We use internal GPU telemetry (NVML on NVIDIA, ROCm on AMD) as the reference power signal throughout; Appendix~\ref{sec:power-validation} documents agreement with external wall-power measurements on the two devices where both are available.
+
+We use internal GPU telemetry (NVML on NVIDIA, ROCm on AMD) as the reference power signal throughout; Appendix~\ref{sec:power-validation} documents agreement with external wall-power measurements for two devices.
+Our benchmarking pipeline and data are publicly available: \url{https://github.com/dos-group/gpu_power_benchmark}. 
+
 
 \section{Background}\label{Background}
 Modern LLM training workloads impose sustained high computational demand and consequently high GPU power consumption. Understanding how workload performance metrics relate to energy behavior is therefore essential for both efficient system operation and predictive performance modeling. This section introduces the utilization metrics commonly used to characterize efficiency and discusses their limitations with respect to robustness and applicability. Then it outlines approaches to GPU power measurements and estimation. 
@@ -110,7 +112,7 @@ Floating-point operations per second (FLOPS) are widely used to describe the com
 GPU Utilization is commonly reported via tools such as \texttt{nvidia-smi} or \texttt{rocm-smi} and is typically defined as the fraction of time during which the GPU is actively executing kernels within a sampling interval~\cite{cornelius-2025, nvidia-no-dateA}. It is widely used for operational monitoring due to its simplicity and availability.
 However, GPU Utilization is a time-based activity metric rather than a measure of compute-efficiency. High utilization may correspond to memory-bound execution, synchronization overhead, or stalled kernels, without implying productive throughput. Moreover, GPU Utilization is a vendor-defined counter, whose values can correspond to substantially different throughput and power behavior. These characteristics limit GPU Utilization as a universal efficiency metric and raise the question about its suitability as a predictor of energy consumption, but it is nevertheless frequently used as an input to GPU power models~\cite{antarctica-2025, bridges-2016}.
 
-\subsubsection{Model FLOPS Utilization (MFU)}
+\subsubsection{Model FLOPs Utilization (MFU)}
 MFU relates observed throughput (Tokens/s) to the theoretical compute required per token relative to the peak compute capacity of the GPU for the specific numerical precision (dtype) used.
 Unlike hardware utilization, MFU can be derived purely from the model architecture and throughput, making it a "software-defined" metric suitable for simulation.
 Therefore, MFU~\cite{chowdhery-2023,ray-2025} is defined as
