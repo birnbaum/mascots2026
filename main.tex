@@ -151,6 +151,7 @@ To validate MFU as a simulation proxy, we develop a cross-architectural benchmar
 We conduct controlled experiments across multiple model scales, batch sizes, precision modes, and context window lengths on diverse GPU platforms. 
 For each configuration, we record hardware telemetry signals until statistical convergence is reached to ensure stable estimates.
 We define \textit{convergence} as the point where the 95\,\% confidence-interval half-width of both MFU and GPU~Utilization falls within 5\,\% of their running mean (i.e.\ $1.96 \cdot \text{SEM}/\bar{x} \le 0.05$), evaluated cumulatively after a minimum of 50 sampling intervals (1\,s each) and capped at 500 intervals to bound run length. Power is sampled jointly but is not part of the stopping rule, since it is the smoother of the three signals; once both predictor signals are stable, power is stable by extension. 
+Each configuration is preceded by 5 warmup training steps that are excluded from telemetry, allowing the GPU to reach steady-state compute behavior before recording begins; configurations are separated by a 2\,s cooldown interval to bound thermal carryover between runs.
 This design enables correlation and regression analysis of utilization metrics as predictors of GPU power consumption across hardware generations.
 
 To support reproducible data collection, we implement a Python-based benchmarking framework that automates configuration sweeps, workload execution, telemetry sampling, and convergence control. Experimental parameters are defined and expanded into run configurations through Hydra~\cite{Yadan2019Hydra}, ensuring traceability and reproducibility.
@@ -176,7 +177,7 @@ Our software stack uses PyTorch~\cite{paszke2019pytorch} and Hugging Face Transf
 Software-reported GPU power is read from on-board sensors via NVML/ROCm. Two systems are additionally instrumented with external node-level meters (Appendix~\ref{sec:power-validation}).
 
 \section{Experiments}\label{results}
-This section evaluates how well MFU and GPU Utilization predict GPU power consumption across hardware platforms and workload configurations. Software-reported power was validated against external hardware measurements where available, see Appendix~\ref{sec:power-validation} for details. We report predictor--power relationships, error characteristics, and sensitivity to experimental variables.
+This section evaluates how well MFU and GPU Utilization predict GPU power consumption across hardware platforms and workload configurations. We report predictor--power relationships, error characteristics, and sensitivity to experimental variables.
 
 \subsection{A Linear MFU-Based Power Model Fits Every GPU}\label{Predictor Performance}
 A linear model relating MFU to internal GPU power fits every device we measured, including the AMD MI210 where vendor utilization gives no usable signal at all. Table~\ref{tab:per_gpu_mfu_power} reports the per-GPU pooled fit alongside the GPU~Utilization counterpart for context, with 95\,\% bootstrap confidence intervals (2000 resamples over configurations).
@@ -219,7 +220,7 @@ Holding numerical precision and batch size fixed, MFU explains 98\,\% of power v
 Section~\ref{Predictor Performance} established that a linear MFU-based power model fits every GPU. Two questions remain: which workload variables shift the slope of that fit, and how far does conditioning on them reduce prediction error before the data themselves run out of signal?
 
 \paragraph{Regime variables.}
-Of the workload axes we vary, only \emph{numerical precision} and \emph{batch size} materially shift the MFU-power relationship. Figure~\ref{fig:Predictors across DTypes} shows the per-dtype OLS fits: reduced-precision formats shift the predictor distributions and change the slope of the line, with MFU exhibiting stronger dtype-dependent scaling than GPU~Utilization. This is expected, since MFU is normalized against a dtype-specific peak FLOPS rate. Figure~\ref{fig:Predictors vs Batch} resolves the batch dimension: MFU rises smoothly from $\sim$1\,\% at batch~1 to 28--44\,\% at batch~128, tracking arithmetic throughput. GPU~Utilization sits at 40--55\,\% already at batch~1 and saturates near 90\,\% well before MFU does. On the MI210, GPU~Utilization is pinned at 100\,\% across every batch size: the ROCm \texttt{GRBM\_COUNT}-based signal flags activity, not throughput. Context window length (512 versus 2048 tokens) and the warmup/cooldown controls have no measurable effect on either predictor or on power.
+Of the workload axes we vary, only \emph{numerical precision} and \emph{batch size} materially shift the MFU-power relationship. Figure~\ref{fig:Predictors across DTypes} shows the per-dtype OLS fits: reduced-precision formats shift the predictor distributions and change the slope of the line, with MFU exhibiting stronger dtype-dependent scaling than GPU~Utilization. This is expected, since MFU is normalized against a dtype-specific peak FLOPS rate. Figure~\ref{fig:Predictors vs Batch} resolves the batch dimension: MFU rises smoothly from $\sim$1\,\% at batch~1 to 28--44\,\% at batch~128, tracking arithmetic throughput. GPU~Utilization sits at 40--55\,\% already at batch~1 and saturates near 90\,\% well before MFU does. On the MI210, GPU~Utilization is pinned at 100\,\% across every batch size: the ROCm \texttt{GRBM\_COUNT}-based signal flags activity, not throughput. Context window length (512 versus 2048 tokens) has no measurable effect on either predictor or on power.
 
 \begin{figure}[t]
     \centering
@@ -308,7 +309,7 @@ The limitations of hardware-dependent utilization metrics become particularly ev
 To enable energy estimation, Özcan et al.~\cite{ozcan-2025} extend this simulation framework with utilization-derived power models that infer energy demand from execution characteristics. However, these approaches rely on implicit utilization proxies rather than explicitly defined, portable metrics. Since hardware-exposed counters are unavailable in simulation, the choice of utilization abstraction remains underspecified.
 
 \section{Conclusion}\label{Conclusion}
-We evaluated MFU as a portable, software-defined power proxy for LLM training simulation across five GPUs from NVIDIA and AMD. A linear MFU-based power model fits every device (per-GPU $R^2$ 0.68--0.84), including the AMD MI210 where GPU Utilization is a binary activity flag and admits no linear fit at all. The fitted slope is hardware-specific by construction, since MFU is normalized by per-GPU peak FLOPS. The model class itself transfers, so a simulator targeting a new device needs only a one-shot per-GPU calibration. Within the compute-bound regime, dtype and batch size are the workload variables that shift the slope; context window length and warmup/cooldown phases can be ignored. At the low-arithmetic-intensity edge of LLM training (batch~1), MFU collapses below 1.3\,\% on every GPU while power stays near 60\,\% of the batch-128 level, marking the boundary beyond which a complementary memory-bandwidth signal is required.
+We evaluated MFU as a portable, software-defined power proxy for LLM training simulation across five GPUs from NVIDIA and AMD. A linear MFU-based power model fits every device (per-GPU $R^2$ 0.68--0.84), including the AMD MI210 where GPU Utilization is a binary activity flag and admits no linear fit at all. The fitted slope is hardware-specific by construction, since MFU is normalized by per-GPU peak FLOPS. The model class itself transfers, so a simulator targeting a new device needs only a one-shot per-GPU calibration. Within the compute-bound regime, dtype and batch size are the workload variables that shift the slope; context window length can be ignored. At the low-arithmetic-intensity edge of LLM training (batch~1), MFU collapses below 1.3\,\% on every GPU while power stays near 60\,\% of the batch-128 level, marking the boundary beyond which a complementary memory-bandwidth signal is required.
 
 Because MFU is already exposed as an analytical output by performance simulators such as Vidur~\cite{agrawal-2025}, an MFU-based power model closes the simulator-to-energy loop without requiring a separate hardware-counter model. This delivers vendor-portable energy estimation for what-if studies in compute-bound LLM training, without ever needing access to physical hardware telemetry.
 
@@ -330,3 +331,19 @@ This alignment justifies using internal telemetry as the primary modeling target
 \bibliography{sources}
 
 \end{document}
+
+
+1. L4 data is on it's way, include it (with imaginary values) everywhere
+2. I don't know, maybe its wrong? I didn't do the benchmark
+3. isn't this in the code?
+4. just say constant warmup=5 and cooldown=5
+5. add a table with peak flops source and cite the respective sources!
+6. isn't this in the code?
+7. I don't know 😬
+8. isn't this in the code?
+9. ok if you want, thouh we really don't need to mention every small detail
+10. ok if you want, thouh we really don't need to mention every small detail
+11. the code is the source of truth
+12. no we compare the GPU reading to the full node reading
+
+Re-ask any open questions
