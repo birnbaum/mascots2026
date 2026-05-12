@@ -1,6 +1,6 @@
 # MASCOTS 2026 Resubmission: GPU Power Modeling
 
-This repository contains the LaTeX source and data for the paper **"On the Predictive Power of Compute Utilization Metrics for GPU Power Modeling"**.
+This repository contains the LaTeX source and data for the paper **"Evaluating MFU as a Portable Power Proxy for Energy-Aware LLM Training Simulation"**.
 The paper was originally submitted to Euro-Par 2026 and is being revised for [MASCOTS 2026](https://mascots26.iitis.pl/call-for-papers/).
 
 ## Project Overview
@@ -46,27 +46,37 @@ The paper received mixed reviews (1, -1, -1, 1). The following points summarize 
 
 ---
 
-## Prioritized TODO List for MASCOTS '26
+## Status
 
-### 1. Methodology & Transparency (High Priority)
-- [x] **Define Convergence:** 95% CI half-width within 5% of running mean (`1.96·SEM/mean ≤ 0.05`) on both MFU and GPU Utilization, cumulative, min. 50 samples, capped at 500 (Section 3.1). Verified against `benchmark.py` `ConvergenceChecker`.
-- [x] **Fix/Replace Table 2:** Restructured by hardware/dtype/batch/ctx; AMD MI210 excluded from the GPU Util column (binary GRBM signal); `n_MFU` / `n_Util` columns make the asymmetric coverage explicit. Caption enumerates the three causes of count variation.
-- [ ] **Hardware Table:** Add a table with host system specifications (CPU, RAM, OS version, driver versions) for all 5 testbeds.
-- [x] **Equation 1 Cleanup:** $FLOPS_{max}$ and $FLOPS_{req}$ are defined in Section 2.1.2.
-- [x] **AMD MI210 Explanation:** ROCm's `GRBM_COUNT` is a binary activity counter — explained in Section 4.1.
-- [ ] **Repository Cleanup:** Add the Python/Hydra benchmarking pipeline to the public repository.
+The narrative pivot to *"MFU as a portable, software-defined power proxy for LLM training simulation"* is complete. Title, abstract, intro contributions, §3.2 (search space + software), §4.1 (linear MFU-power per GPU + new headline table with bootstrap CIs), §4.2 (regimes of reliability — merged old §4.2 + §4.3), §4.3 (memory-bound failure mode from existing batch-1 data), §5 (limitations trimmed), conclusion (composition argument), and takeaways have all been rewritten.
 
-### 2. Narrative & Content (Medium Priority)
-- [ ] **Strengthen the "Story":** Better link the telemetry validation (Section 4.1) to the utilization experiments. Frame validation as a prerequisite.
-- [ ] **Compute vs. Memory Bound:** Discuss the impact of arithmetic intensity. Add a section or paragraph exploring cases where memory bandwidth is the bottleneck (and MFU fails).
-- [x] **Terminology Pass:** "compute-bound" and "memory-bound" are defined in Section 2.1.2.
-- [ ] **Figure Polish:** Add legends to all plots. Ensure consistent color mapping across figures and describe it in the text.
+Current page count: 7. ~1 page of headroom for further additions.
 
-### 3. Technical Fixes (Low Priority)
-- [x] **Add Missing Citations:** `calflops` (Section 2.1.2 and 3.2), `Hydra` (Section 3.1), `AccelWattch` (Related Work).
-- [x] **RTX 4070 Ti Noise:** Workstation-level noise characteristics discussed in Section 4.1 and Section 5.
+## Open work
 
----
+### Still to do
+- [ ] **Hardware Table:** host system specs (CPU, RAM, OS, driver versions) for all testbeds — addresses Reviewer 3.
+- [ ] **Repository Cleanup:** add the Python/Hydra benchmarking pipeline to the public `gpu_power_benchmark` repo.
+- [ ] **Figure Polish:** consistent color mapping + legends across all plots.
+- [ ] **L4 results:** L4 is listed in the §3.2 design grid but no data yet; add row to Table 2, fill in `fig:Prediction Error Figure` panel, update abstract config count once measured.
 
-## Implementation Strategy
-For the MASCOTS resubmission, the focus should shift from a "measurement report" to a "modeling study." We should emphasize the utility of MFU for **simulation frameworks** (like Vidur) where hardware counters are physically impossible to obtain. This turns the "weakness" of MFU into a "strength" (portability).
+### Candidate page-fill additions (we have ~1 page)
+- [ ] **Memory-bound plot for §4.3:** power and MFU vs batch size, one line per GPU. Turns the strongest table in the paper into the strongest figure. Existing data, no new measurements. *Highest impact.*
+- [ ] **Per-GPU regression-line plot for §4.1:** MFU on x-axis, power on y-axis, five colored regression lines on one panel. Visualizes the "different slopes, same form" claim that currently lives only in prose.
+- [ ] **GPU Util MAPE column in Table 2** (`tab:per_gpu_mfu_power`) for parity with MFU MAPE. Cheap, low risk.
+- [ ] **Drop the Hardware slice block** from the per-config table in §4.2 (already covered by §4.1's Table 2). Tightens the table.
+- [ ] **Worked composition example** (small inset or paragraph): how a simulator user pulls MFU from Vidur, looks up the per-GPU slope, integrates over a trace to get energy. Concrete, addresses "earn the title."
+- [ ] **Slope-vs-peak-FLOPS scatter** (small inset): 5 points, directly evidences the "slopes scale with peak FLOPS" claim.
+
+### Items closed in this revision (history)
+- [x] Define Convergence (Section 3.1).
+- [x] Replace aggregated Table 2 with bootstrap-CI headline table (`tab:per_gpu_mfu_power`, Section 4.1).
+- [x] Equation 1 parameters defined (Section 2.1.2).
+- [x] AMD MI210 GRBM_COUNT explanation (Section 4.1).
+- [x] Terminology pass: "compute-bound" and "memory-bound" defined (Section 2.1.2).
+- [x] Missing citations added (`calflops`, `Hydra`, `AccelWattch`).
+- [x] RTX 4070 Ti noise: caveat in Section 5; not framed as a result.
+- [x] Narrative reframe: §4 restructured around (a) linear MFU-power per GPU, (b) regimes of reliability, (c) memory-bound scope boundary.
+- [x] Memory-bound finding from existing data: §4.3 batch-1 vs batch-128 table extracted from the 504-config sweep — no new experiments needed.
+- [x] Limitations section: dropped the hardware-metering paragraph; not load-bearing for the new story.
+- [x] Title shifted to "...LLM Training Simulation" (honest about scope).

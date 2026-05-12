@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{Residual standard deviation of the MFU power model (pooled and (dtype, batch)-conditioned) versus the cross-repeat measurement-noise floor, each as a percentage of mean GPU power. The conditioned model is within a small factor of the noise floor on every NVIDIA GPU; the MI210's AMD power telemetry is unusually quiet, leaving visible model headroom in relative but not absolute terms.}
+\label{tab:noise_floor}
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lccc}
+    \toprule
+    \textbf{GPU} & \textbf{Pooled MFU} & \textbf{+ (dtype, batch)} & \textbf{Repeat noise} \\
+    \midrule
+        NVIDIA A100 & 12.49\,\% & 2.13\,\% & 1.48\,\% \\
+        NVIDIA L40 & 9.01\,\% & 1.29\,\% & 0.45\,\% \\
+        NVIDIA Quadro 5000 & 12.79\,\% & 1.95\,\% & 1.73\,\% \\
+        NVIDIA RTX 4070 Ti & 16.44\,\% & 2.21\,\% & 2.16\,\% \\
+        AMD MI210 & 17.43\,\% & 2.81\,\% & 0.23\,\% \\
+    \bottomrule
+\end{tabular}
+\end{table}
