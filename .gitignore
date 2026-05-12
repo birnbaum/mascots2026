@@ -1,4 +1,5 @@
 # LaTeX
+main.pdf
 *.aux
 *.bbl
 *.blg
@@ -6,7 +7,6 @@
 *.fls
 *.log
 *.out
-*.pdf
 *.synctex.gz
 *.toc
 *.run.xml
@@ -19,7 +19,3 @@
 # OS
 .DS_Store
 Thumbs.db
-
-# Project-specific
-conference-latex-template.zip
-MASCOTS_template/
