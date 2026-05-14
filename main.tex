@@ -285,7 +285,7 @@ Two questions remain: which workload variables shift the slope of that fit, and 
 Of the workload axes we vary, only \emph{numerical precision} and \emph{batch size} materially shift the MFU-power relationship.
 Figure~\ref{fig:Predictors across DTypes} shows the per-dtype OLS fits: reduced-precision formats shift the predictor distributions and change the slope of the line, with MFU exhibiting stronger dtype-dependent scaling than GPU~Utilization.
 This is expected, since MFU is normalized against a dtype-specific peak FLOPS rate.
-Figure~\ref{fig:Predictors vs Batch} illustrates effect of batch size on MFU ang GPU Utilization.
+Figure~\ref{fig:Predictors vs Batch} illustrates effect of batch size on MFU and GPU Utilization.
 MFU rises smoothly from around 1\,\% at batch~1 to 28--44\,\% at batch~128, tracking arithmetic throughput.
 GPU Utilization sits at 40--55\,\% already at batch~1 and saturates near 90\,\% well before MFU does.
 On the MI210, GPU Utilization is pinned at 100\,\% across every batch size: ROCm reports utilization from the \texttt{GRBM\_COUNT} counter, which acts as a binary activity flag rather than a throughput proxy and saturates at 100\,\% under any sustained training workload, so a linear power--utilization fit is undefined on that device.
