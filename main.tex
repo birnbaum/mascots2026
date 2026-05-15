@@ -61,13 +61,13 @@ wiesner@tu-berlin.de}
 High-fidelity performance simulators are essential for designing and configuring efficient AI systems, yet today's tools lack the ability to predict power consumption.
 This is due to a telemetry gap: simulators cannot access hardware-level utilization counters that are typically used for power modeling.
 This work evaluates whether Model FLOPs Utilization (MFU)---an analytical, software-defined metric relating achieved throughput to peak hardware capability---can serve as a portable, software-defined predictor of GPU power for LLMs.
-We benchmark almost 3000 training configurations across six GPUs, covering different model families, numerical precisions, batch sizes, and context-window lengths.
+We benchmark almost 3000 training runs across six GPUs, covering different model families, numerical precisions, batch sizes, and context-window lengths.
 We find that a linear MFU-based power model fits every tested GPU as long as the workload is compute-bound, as in production LLM training.
 Fitting per-(GPU, dtype, batch size) instead of per-GPU drops the within-cell mean error from around 10\,\% to around 1\,\%, matching the cross-repeat measurement-noise floor.
 \end{abstract}
 
 \begin{IEEEkeywords}
-GPU power modeling, energy-efficient AI, LLM simulation, MFU
+GPU power modeling, Model FLOPs Utilization, LLM simulation, energy-efficient AI, performance modeling
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -451,7 +451,7 @@ To enable energy estimation, Özcan et al.~\cite{ozcan-2025} extend the Vidur fr
 However, these approaches rely on implicit utilization proxies rather than explicitly defined, portable metrics, leaving the choice of utilization abstraction underspecified.
 
 \section{Conclusion}\label{Conclusion}
-In this paper, we evaluated MFU as a portable, software-defined power proxy for LLM training across six NVIDIA and AMD GPUs and nearly 3000 configurations.
+In this paper, we evaluated MFU as a portable, software-defined power proxy for LLM training across six NVIDIA and AMD GPUs and nearly 3000 runs.
 A linear MFU-power model fits every device in the compute-bound regime, with one fit per (GPU, dtype, batch size) cell.
 Because MFU is an analytical quantity derivable from model structure and execution parameters, this result establishes MFU as a predictor for compute-bound LLM training simulation.
 Future work should extend the approach to LLM inference simulators such as Vidur~\cite{agrawal-2025}, whose autoregressive decode regime is memory-bound rather than compute-bound.
