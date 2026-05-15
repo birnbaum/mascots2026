@@ -92,7 +92,7 @@ For LLM training, which is predominantly compute-bound, MFU captures the compute
 We validate MFU against ground-truth hardware measurements, providing a portable methodology for energy-aware simulation without vendor-specific telemetry.
 
 To do so, we build a cross-architectural benchmarking framework and execute a controlled training sweep on \emph{six} accelerators spanning two vendors and four hardware tiers (NVIDIA A100, L40, L4, Quadro RTX~5000, RTX~4070~Ti, and AMD MI210).
-The sweep crosses three model families (Qwen2.5, GPT-2, DialoGPT), three numerical precisions (fp32, fp16, bf16), seven batch sizes (1--128), and two context-window lengths (512, 2048~tokens), yielding 504 configurations per device, each repeated four times with telemetry sampled until statistical convergence.
+The sweep crosses three model families (Qwen2.5, GPT-2, DialoGPT), three numerical precisions (fp32, fp16, bf16), seven batch sizes (1--128), and two context-window lengths (512, 2048~tokens), yielding 126 configurations per device, each repeated four times with telemetry sampled until statistical convergence.
 For every configuration, we record MFU, vendor-reported GPU~Utilization, and GPU power, and use this dataset to evaluate MFU and GPU~Utilization as predictors of power across hardware platforms and workload regimes.
 We use internal GPU telemetry (NVML on NVIDIA, ROCm on AMD) as the reference power signal throughout.
 Appendix~\ref{sec:power-validation} documents agreement with external wall-power measurements for two devices.
@@ -215,7 +215,6 @@ The FP32 peaks reflect the Tensor/Matrix-Core path that PyTorch takes under \tex
 For each configuration we sample until the 95\,\% confidence-interval half-width of both MFU and GPU~Utilization falls within 5\,\% of their running mean (i.e.\ $1.96 \cdot \text{SEM}/\bar{x} \le 0.05$), with a minimum of 50 samples and a hard cap of 500.
 Power is sampled jointly but excluded from the stopping rule.
 It is the smoothest of the three signals, and once both predictors are stable it is stable by extension.
-It is the smoothest of the three signals, and once both predictors are stable it is stable by extension.
 
 Models are executed with PyTorch~\cite{paszke2019pytorch} and Hugging Face Transformers~\cite{wolf2019huggingface0s}.
 Configuration sweeps are managed with Hydra~\cite{Yadan2019Hydra}.
@@ -225,7 +224,7 @@ FLOP profiling uses CalFLOPS~\cite{calflops}.
 
 \subsection{Aggregation and Metrics}\label{sec:analysis}
 Per-sample logs are aggregated to per-configuration means across the four repetitions.
-All linear fits in \S\ref{results} are ordinary least squares of GPU-reported power on the empirical (CalFLOPS-based) MFU, using the raw (non-aggregated) samples.
+All linear fits in Section~\ref{results} are ordinary least squares of GPU-reported power on the empirical (CalFLOPS-based) MFU, using the raw (non-aggregated) samples.
 $R^2$ and MAPE = $\text{mean}(|y-\hat{y}|/|y|)$ are reported with 95\,\% confidence intervals from a row-level bootstrap with 2000 resamples.
 
 
@@ -257,7 +256,7 @@ We report predictor--power relationships, error characteristics, and sensitivity
     \vspace{-4mm}
     \includegraphics[width=\columnwidth]{figures/predictor_vs_power.pdf}
     \vspace{-6mm}
-    \caption{MFU and GPU~Utilization versus GPU-reported power. The MI210 appears only in the MFU panel because its GPU~Utilization signal is effectively binary (Section~\ref{Relationship Across Variables}).}
+    \caption{MFU and GPU~Utilization versus GPU-reported power. The MI210 appears only in the MFU panel because its GPU~Utilization signal is effectively binary.}
     \label{fig:Predictors across DTypes}
 \end{figure}
 
@@ -267,7 +266,7 @@ Table~\ref{tab:per_gpu_mfu_power} reports the per-GPU fits alongside the GPU~Uti
 The per-GPU MFU fits explain 68--84\,\% of variance in GPU-reported power on training-class NVIDIA cards, dropping to 37\,\% on the inference-class L4, and 77\,\% on the AMD MI210.
 Mean absolute percentage errors (MAPE) range from 3.5\,\% on the L4 to 13.7\,\% on MI210.
 This is sufficient precision for the ``what-if'' energy comparisons targeted by training simulators.
-GPU~Utilization fits are tighter than MFU on NVIDIA hardware (0.67--0.87), but MFU is the only one of the two predictors that yields a fittable model on every device: on the MI210, vendor-reported GPU~Utilization saturates at 100\,\% under any sustained training workload (\S\ref{Relationship Across Variables}), so no linear power--utilization fit is defined there.
+GPU~Utilization fits are tighter than MFU on NVIDIA hardware (0.67--0.87), but MFU is the only one of the two predictors that yields a fittable model on every device: on the MI210, vendor-reported GPU~Utilization saturates at 100\,\% under any sustained training workload (Section~\ref{Relationship Across Variables}), so no linear power--utilization fit is defined there.
 
 
 \paragraph{Each device needs its own fit}
@@ -290,14 +289,14 @@ With this little signal to fit, $R^2$ drops to 0.37, yet the L4's MAPE is the lo
 \takeaway{A linear MFU-based power model fits every device we measured, including the AMD~MI210 where GPU~Utilization is a binary activity flag and admits no linear fit. The linear relationship holds across vendors and precisions, but each device needs its own fit because MFU is normalized by peak FLOPS. Supporting a new accelerator therefore takes only a one-shot per-GPU calibration sweep.}
 
 \subsection{Conditioning on Dtype and Batch Size}\label{Relationship Across Variables}
-Section~\ref{Predictor Performance} established that a linear MFU-based power model fits every GPU.
+We established that a linear MFU-based power model fits every GPU.
 Two questions remain: which workload variables shift the slope of that fit, and how far does conditioning on them reduce prediction error before the data themselves run out of signal?
 
 \paragraph{Impact of dtype and batch size}
 Of the workload axes we vary, only \emph{numerical precision} and \emph{batch size} materially shift the MFU-power relationship.
 Figure~\ref{fig:Predictors across DTypes} shows the per-dtype OLS fits: reduced-precision formats shift the predictor distributions and change the slope of the line, with MFU exhibiting stronger dtype-dependent scaling than GPU~Utilization.
 This is expected, since MFU is normalized against a dtype-specific peak FLOPS rate.
-Figure~\ref{fig:Predictors vs Batch} illustrates effect of batch size on MFU and GPU Utilization.
+Figure~\ref{fig:Predictors vs Batch} illustrates the effect of batch size on MFU and GPU Utilization.
 MFU rises smoothly from around 1\,\% at batch~1 to 28--44\,\% at batch~128, tracking arithmetic throughput.
 GPU Utilization sits at 40--55\,\% already at batch~1 and saturates near 90\,\% well before MFU does.
 On the MI210, GPU Utilization is pinned at 100\,\% across every batch size: ROCm reports utilization from the \texttt{GRBM\_COUNT} counter, which acts as a binary activity flag rather than a throughput proxy and saturates at 100\,\% under any sustained training workload, so the linear fit is undefined on that device.
@@ -332,7 +331,7 @@ The RTX~4070~Ti reverses this ordering: both predictors fit it worst overall, re
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{figures/predicted_vs_measured_power.pdf}
-    \caption{Predicted versus measured GPU power, where the prediction is the fitted value of an OLS regression from MFU to power. Left: a single per-GPU fit; batch-1 configurations (yellow) cluster off the diagonal because the memory-bound regime breaks the single-slope fit (Section~\ref{sec:failure-modes}). Right: a separate fit per (dtype, batch) cell; predictions collapse onto the diagonal across batch sizes and dtypes.}
+    \caption{Predicted versus measured GPU power, where the prediction is the fitted value of an OLS regression from MFU to power. Left: a single per-GPU fit; batch-1 configurations (yellow) cluster off the diagonal because the memory-bound regime breaks the single-slope fit. Right: a separate fit per (dtype, batch) cell; predictions collapse onto the diagonal across batch sizes and dtypes.}
     \label{fig:pred_vs_meas_power}
 \end{figure}
 
