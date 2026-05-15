@@ -99,7 +99,7 @@ Appendix~\ref{sec:power-validation} documents agreement with external wall-power
 
 Our key findings are:
 \begin{itemize}
-    \item A linear MFU-power model fits every GPU we measure ($R^2$ 0.68--0.84), including AMD MI210 where vendor-reported GPU~Utilization is a binary activity flag and admits no linear fit at all.
+    \item A linear MFU-power model fits every GPU we measure, including AMD MI210 where vendor-reported GPU~Utilization is a binary activity flag and admits no linear fit at all.
     \item The linear relationship holds across vendors and precisions, but each device needs its own fit because MFU is normalized by peak FLOPS. Supporting a new accelerator therefore takes only a one-shot per-GPU calibration sweep.
     \item Conditioning a separate linear fit per (GPU, dtype, batch size) collapses MAPE from $\sim$10\,\% per-GPU to $\sim$1\,\% per cell, which is statistically indistinguishable from the cross-repeat measurement-noise floor. The practical recipe for an MFU-based power proxy is therefore to condition on these three axes and on nothing else.
     \item At batch~1, MFU collapses below 1.3\,\% while power stays at $\sim$60\,\% of the batch-128 level. Further-out memory-bound regimes need a complementary memory-bandwidth signal.
@@ -112,7 +112,7 @@ Our benchmarking pipeline and data are publicly available: \url{https://github.c
 Modern LLM training workloads impose sustained high computational demand and correspondingly high GPU power draw, so understanding how workload performance metrics relate to energy behavior is central to both efficient operation and predictive modeling.
 Floating-point operations per second (FLOPS) are the conventional starting point for describing GPU compute capability, with vendors reporting theoretical peaks under idealized conditions.
 Real training workloads rarely approach these peaks because of memory effects, scheduling overhead, communication latency, and kernel structure, so the relevant practical question is which fraction of peak compute a workload actually realizes and how that fraction relates to power.
-The remainder of this section reviews two utilization metrics commonly used to answer this question (\S\ref{sec:bg-gpu-util},~\S\ref{sec:bg-mfu}) and then outlines how GPU power is measured and estimated in practice (\S\ref{sec:bg-power}).
+The remainder of this section reviews two utilization metrics commonly used to answer this question (Section~\ref{sec:bg-gpu-util},~\ref{sec:bg-mfu}) and then outlines how GPU power is measured and estimated in practice (Section~\ref{sec:bg-power}).
 
 \subsection{GPU Utilization}\label{sec:bg-gpu-util}
 GPU Utilization is commonly reported via tools such as \texttt{nvidia-smi} or \texttt{rocm-smi} and is typically defined as the fraction of time during which the GPU is actively executing kernels within a sampling interval~\cite{cornelius-2025, nvidia-no-dateA}.
@@ -158,7 +158,7 @@ This portability gap is exactly what an MFU-based power model aims to close.
 
 \section{Experimental Framework}\label{methodology}
 To validate MFU as a simulation proxy, we develop a cross-architectural benchmarking framework that maps high-level model parameters to empirical power consumption.
-We organize the framework into the workloads we run (\S\ref{sec:workloads}), the protocol used to measure them (\S\ref{sec:execution}), and the analysis pipeline that turns the raw logs into the regressions reported in \S\ref{results} (\S\ref{sec:analysis}).
+We organize the framework into the workloads we run (Section~\ref{sec:workloads}), the protocol used to measure them (Section~\ref{sec:execution}), and the analysis pipeline that turns the raw logs into the regressions reported in Section~\ref{results} (Section~\ref{sec:analysis}).
 
 \subsection{Workloads}\label{sec:workloads}
 Each measurement run drives the GPU with a causal-language-modelling \emph{training} step (forward pass, backward pass, and AdamW optimizer step), so that observed power reflects the full compute graph a training simulator would target.
@@ -245,7 +245,7 @@ We report predictor--power relationships, error characteristics, and sensitivity
         \midrule
         NVIDIA A100        & $0.74 \pm 0.03$ & $11.0 \pm 0.7$\,\%           & $0.87$ \\
         NVIDIA L40         & $0.80 \pm 0.03$ & $\phantom{0}7.8 \pm 0.5$\,\% & $0.82$ \\
-        NVIDIA L4          & $9.99 \pm 9.99$ & $99.9 \pm 9.9$\,\%           & $9.99$ \\
+        NVIDIA L4          & $0.37 \pm 0.03$ & $\phantom{0}3.5 \pm 0.5$\,\% & $0.17$ \\
         NVIDIA Quadro 5000 & $0.84 \pm 0.02$ & $12.5 \pm 1.4$\,\%           & $0.85$ \\
         NVIDIA RTX 4070 Ti & $0.68 \pm 0.06$ & $12.5 \pm 1.1$\,\%           & $0.67$ \\
         AMD MI210          & $0.77 \pm 0.05$ & $13.7 \pm 0.9$\,\%           & ---     \\
@@ -264,8 +264,8 @@ We report predictor--power relationships, error characteristics, and sensitivity
 \subsection{A Linear MFU-Based Power Model Fits Every GPU}\label{Predictor Performance}
 Across all six devices, a linear MFU-based power model fits the GPU-reported power signal.
 Table~\ref{tab:per_gpu_mfu_power} reports the per-GPU fits alongside the GPU~Utilization counterpart for context.
-The per-GPU MFU fits explain 68--84\,\% of variance in GPU-reported power across NVIDIA devices, and 77\,\% on the AMD MI210.
-Mean absolute percentage errors (MAPE) range from 7.8\,\% on the L40 to 13.7\,\% on MI210.
+The per-GPU MFU fits explain 68--84\,\% of variance in GPU-reported power on training-class NVIDIA cards, dropping to 37\,\% on the inference-class L4, and 77\,\% on the AMD MI210.
+Mean absolute percentage errors (MAPE) range from 3.5\,\% on the L4 to 13.7\,\% on MI210.
 This is sufficient precision for the ``what-if'' energy comparisons targeted by training simulators.
 GPU~Utilization fits are tighter than MFU on NVIDIA hardware (0.67--0.87), but MFU is the only one of the two predictors that yields a fittable model on every device: on the MI210, vendor-reported GPU~Utilization saturates at 100\,\% under any sustained training workload (\S\ref{Relationship Across Variables}), so no linear power--utilization fit is defined there.
 
@@ -279,9 +279,13 @@ This is precisely the input simulators already produce as an analytical metric~\
 
 \paragraph{Power scales linearly with MFU within each precision}
 Holding numerical precision and batch size fixed, MFU explains 98\,\% of power variance on the MI210 (median $R^2 = 0.997$ across 21 cells; mean $0.980$, std $0.038$).
-The corresponding NVIDIA medians range from $0.89$ (RTX 4070 Ti) to $0.98$ (A100, Quadro 5000).
+The corresponding NVIDIA medians range from $0.89$ (RTX 4070 Ti) to $0.98$ (A100, Quadro 5000), with the exception of the L4 with $0.43$ due to its low power range.
 Figure~\ref{fig:Predictors across DTypes} shows the underlying scatter: within each dtype, power scales near-linearly with MFU on every device, with per-dtype slopes that reflect the peak-FLOPS spread noted above.
-The per-GPU $R^2$ values in Table~\ref{tab:per_gpu_mfu_power} are lower because they average over multiple regimes, not because the underlying relationship is noisy, see \S\ref{Relationship Across Variables}.
+The per-GPU $R^2$ values in Table~\ref{tab:per_gpu_mfu_power} are lower because they average over multiple regimes, not because the underlying relationship is noisy.
+
+\paragraph{The L4 is a partial exception}
+Its 72\,W TDP leaves only $\sim$10\,W above a 64\,W idle floor (87\,\% of TDP, versus 60--80\,\% on the data-center cards).
+With this little signal to fit, $R^2$ drops to 0.37, yet the L4's MAPE is the lowest in the fleet (3.5\,\% per-GPU, 0.6\,\% per cell): in absolute terms the linear model still predicts L4 power accurately, simply because there is little to predict.
 
 \takeaway{A linear MFU-based power model fits every device we measured, including the AMD~MI210 where GPU~Utilization is a binary activity flag and admits no linear fit. The linear relationship holds across vendors and precisions, but each device needs its own fit because MFU is normalized by peak FLOPS. Supporting a new accelerator therefore takes only a one-shot per-GPU calibration sweep.}
 
@@ -289,14 +293,14 @@ The per-GPU $R^2$ values in Table~\ref{tab:per_gpu_mfu_power} are lower because 
 Section~\ref{Predictor Performance} established that a linear MFU-based power model fits every GPU.
 Two questions remain: which workload variables shift the slope of that fit, and how far does conditioning on them reduce prediction error before the data themselves run out of signal?
 
-\paragraph{Dtype and batch size shift the slope}
+\paragraph{Impact of dtype and batch size}
 Of the workload axes we vary, only \emph{numerical precision} and \emph{batch size} materially shift the MFU-power relationship.
 Figure~\ref{fig:Predictors across DTypes} shows the per-dtype OLS fits: reduced-precision formats shift the predictor distributions and change the slope of the line, with MFU exhibiting stronger dtype-dependent scaling than GPU~Utilization.
 This is expected, since MFU is normalized against a dtype-specific peak FLOPS rate.
 Figure~\ref{fig:Predictors vs Batch} illustrates effect of batch size on MFU and GPU Utilization.
 MFU rises smoothly from around 1\,\% at batch~1 to 28--44\,\% at batch~128, tracking arithmetic throughput.
 GPU Utilization sits at 40--55\,\% already at batch~1 and saturates near 90\,\% well before MFU does.
-On the MI210, GPU Utilization is pinned at 100\,\% across every batch size: ROCm reports utilization from the \texttt{GRBM\_COUNT} counter, which acts as a binary activity flag rather than a throughput proxy and saturates at 100\,\% under any sustained training workload, so a linear power--utilization fit is undefined on that device.
+On the MI210, GPU Utilization is pinned at 100\,\% across every batch size: ROCm reports utilization from the \texttt{GRBM\_COUNT} counter, which acts as a binary activity flag rather than a throughput proxy and saturates at 100\,\% under any sustained training workload, so the linear fit is undefined on that device.
 The tested context window lengths (512 versus 2048 tokens) had no measurable effect on either predictor or on power.
 
 \begin{figure}[t]
@@ -335,12 +339,12 @@ The RTX~4070~Ti reverses this ordering: both predictors fit it worst overall, re
 \paragraph{The conditioned model is at the data limit}
 The $\sim$1\,\% MAPE quoted above is an in-sample number.
 We investigate whether the remaining error is model misspecification or measurement noise.
-Each of the 504 (336 on the Quadro~5000) per-GPU configurations is measured across four independent repeats separated by large time gaps.
+Each of the 504 (336 on the Quadro~5000; 392 on the L4) per-GPU configurations is measured across four independent repeats separated by large time gaps.
 The cross-repeat standard deviation of mean power therefore bounds any predictor's achievable accuracy.
 Table~\ref{tab:noise_floor} compares the per-GPU MFU model's residual SD, the per-(GPU, dtype, batch) model's residual SD, and the cross-repeat measurement-noise SD, each as a percentage of the GPU's mean power.
-Conditioning cuts the per-GPU residual by 5--6$\times$ on every device, and on every NVIDIA GPU the conditioned residual is within 1.1--2.7$\times$ of the noise floor.
-On the Quadro~5000 and RTX~4070~Ti it is statistically indistinguishable from it.
-The MI210 is the lone outlier in relative terms: its AMD power telemetry is unusually quiet (cross-repeat SD of 0.23\,\% against $\geq$0.45\,\% on every NVIDIA device), but its conditioned residual is in line with the rest of the fleet in absolute terms.
+Conditioning cuts the per-GPU residual by 4--7$\times$ on every device, and on every NVIDIA GPU the conditioned residual is within 1.3--3.7$\times$ of the noise floor.
+On the RTX~4070~Ti and L4 it is statistically indistinguishable from it.
+The MI210 is the lone outlier in relative terms: its AMD power telemetry is unusually quiet (cross-repeat SD of 0.20\,\% against $\geq$0.35\,\% on every NVIDIA device), but its conditioned residual is in line with the rest of the fleet in absolute terms.
 
 \begin{table}[t]
 \centering
@@ -351,11 +355,12 @@ The MI210 is the lone outlier in relative terms: its AMD power telemetry is unus
     \toprule
     \textbf{GPU} & \textbf{per-GPU} & \makecell{\textbf{per-(GPU,} \\ \textbf{dtype, batch)}} & \makecell{\textbf{Repeat} \\ \textbf{noise}} \\
     \midrule
-        NVIDIA A100 & 12.49\,\% & 2.13\,\% & 1.48\,\% \\
-        NVIDIA L40 & 9.01\,\% & 1.29\,\% & 0.45\,\% \\
-        NVIDIA Quadro 5000 & 12.79\,\% & 1.95\,\% & 1.73\,\% \\
-        NVIDIA RTX 4070 Ti & 16.44\,\% & 2.21\,\% & 2.16\,\% \\
-        AMD MI210 & 17.43\,\% & 2.81\,\% & 0.23\,\% \\
+        NVIDIA A100 & 12.50\,\% & 2.13\,\% & 1.08\,\% \\
+        NVIDIA L40 & \phantom{0}9.02\,\% & 1.29\,\% & 0.35\,\% \\
+        NVIDIA L4 & \phantom{0}4.46\,\% & 1.00\,\% & 0.71\,\% \\
+        NVIDIA Quadro 5000 & 12.81\,\% & 1.95\,\% & 1.23\,\% \\
+        NVIDIA RTX 4070 Ti & 16.46\,\% & 2.21\,\% & 1.66\,\% \\
+        AMD MI210 & 17.81\,\% & 2.87\,\% & 0.20\,\% \\
     \bottomrule
 \end{tabular}
 \end{table}
@@ -366,8 +371,8 @@ The MI210 is the lone outlier in relative terms: its AMD power telemetry is unus
 MFU normalizes throughput by peak FLOPS, so any workload bottlenecked on memory bandwidth rather than arithmetic will execute with low MFU even when power and GPU~Utilization remain high.
 Our search grid already brackets this boundary at its low-arithmetic-intensity end: the batch-1 band visible in Figure~\ref{fig:pred_vs_meas_power} is its signature.
 Table~\ref{tab:batch1_memory_bound} quantifies the gap.
-Going from batch~1 to batch~128, MFU collapses by 35--75$\times$ across the five GPUs while power changes by only $1.6$--$2.0\times$.
-At batch~1, every device runs below 1.3\,\% MFU yet still draws 50--65\,\% of its batch-128 power.
+Going from batch~1 to batch~128, MFU collapses by 36--72$\times$ across the six GPUs while power changes by only $1.1$--$2.0\times$.
+At batch~1, every device runs below 1.3\,\% MFU yet still draws 46--64\,\% of its batch-128 power---and 90\,\% on the L4, where the idle floor dominates the device's envelope.
 A single linear MFU-power slope fit on the broader sweep therefore extrapolates downward through this regime and substantially under-predicts power, with a 70--120\,W absolute error on the data-center cards.
 
 \begin{table}[t]
@@ -382,6 +387,7 @@ A single linear MFU-power slope fit on the broader sweep therefore extrapolates 
         \midrule
         NVIDIA A100        & 0.4\,\% & 28.1\,\% & 189 & 307 \\
         NVIDIA L40         & 0.4\,\% & 31.8\,\% & 200 & 315 \\
+        NVIDIA L4          & 0.5\,\% & 22.3\,\% & \phantom{0}63 & \phantom{0}70 \\
         NVIDIA Quadro 5000 & 0.8\,\% & 35.5\,\% & 111 & 201 \\
         NVIDIA RTX 4070 Ti & 0.3\,\% & 14.9\,\% & \phantom{0}97 & 169 \\
         AMD MI210          & 1.2\,\% & 44.3\,\% & \phantom{0}72 & 148 \\
@@ -462,7 +468,7 @@ The constant offset represents the host system's base power, which remains invar
 This alignment justifies using internal telemetry as the primary modeling target throughout the experiments.
 
 
-\begin{figure}[t]
+\begin{figure}[h]
     \centering
     \includegraphics[width=\columnwidth]{figures/external_vs_internal_power.pdf}
     \caption{GPU-reported vs. external hardware-based power measurements for NVIDIA L40 and Quadro RTX 5000.}
