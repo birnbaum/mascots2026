@@ -59,9 +59,9 @@ wiesner@tu-berlin.de}
 
 \begin{abstract}
 High-fidelity performance simulators are essential for designing and configuring efficient AI systems, yet today's tools lack the ability to predict power consumption.
-This is due to a telemetry gap: simulators cannot access hardware-level utilization counters that are typically used for power modeling.
+Established GPU power models rely on hardware utilization counters, which do not exist until the workload has actually run.
 This work evaluates whether Model FLOPs Utilization (MFU)---an analytical, software-defined metric relating achieved throughput to peak hardware capability---can serve as a portable, software-defined predictor of GPU power for LLMs.
-We benchmark almost 3000 training runs across six GPUs, covering different model families, numerical precisions, batch sizes, and context-window lengths.
+We benchmark almost 3000 single-device training runs across six GPUs, covering different model families, numerical precisions, batch sizes, and context-window lengths.
 We find that a linear MFU-based power model fits every tested GPU as long as the workload is compute-bound, as in production LLM training.
 Fitting per-(GPU, dtype, batch size) instead of per-GPU drops the within-cell mean error from around 10\,\% to around 1\,\%, matching the cross-repeat measurement-noise floor.
 \end{abstract}
@@ -91,7 +91,7 @@ This paper investigates whether MFU can serve as a reliable, portable, and softw
 For LLM training, which is predominantly compute-bound, MFU captures the compute saturation that drives power consumption.
 We validate MFU against ground-truth hardware measurements, providing a portable methodology for energy-aware simulation without vendor-specific telemetry.
 
-To do so, we build a cross-architectural benchmarking framework and execute a controlled training sweep on \emph{six} accelerators spanning two vendors and four hardware tiers (NVIDIA A100, L40, L4, Quadro RTX~5000, RTX~4070~Ti, and AMD MI210).
+To do so, we build a cross-architectural benchmarking framework and execute a controlled single-GPU training sweep on \emph{six} accelerators spanning two vendors and four hardware tiers (NVIDIA A100, L40, L4, Quadro RTX~5000, RTX~4070~Ti, and AMD MI210).
 The sweep crosses three model families (Qwen2.5, GPT-2, DialoGPT), three numerical precisions (fp32, fp16, bf16), seven batch sizes (1--128), and two context-window lengths (512, 2048~tokens), yielding 126 configurations per device, each repeated four times with telemetry sampled until statistical convergence.
 For every configuration, we record MFU, vendor-reported GPU~Utilization, and GPU power, and use this dataset to evaluate MFU and GPU~Utilization as predictors of power across hardware platforms and workload regimes.
 We use internal GPU telemetry (NVML on NVIDIA, ROCm on AMD) as the reference power signal throughout.
@@ -181,6 +181,8 @@ Each configuration is repeated four times.
 
 We use the same optimizer (AdamW, learning rate $10^{-4}$, weight decay $0.01$), attention implementation (eager, with flash and memory-efficient SDPA kernels disabled), sampling interval (1\,s of GPU-event time), warmup (5 training steps), cooldown (5\,s between configurations), and single-GPU execution across all runs.
 Gradient scaling is disabled across all precisions for consistency.
+Clocks, persistence mode, and power limits are left at driver defaults, so devices are free to adjust frequency and voltage as they would in production.
+% The resulting variability is bounded: temperature explains under 1.5\,\% of the within-cell residual variance, and the median drift of per-configuration mean power across repeats stays below 0.12\,\%, well under the measurement-noise floor of Table~\ref{tab:noise_floor}.
 
 
 \subsection{Execution and Telemetry}\label{sec:execution}
@@ -224,7 +226,8 @@ FLOP profiling uses CalFLOPS~\cite{calflops}.
 
 \subsection{Aggregation and Metrics}\label{sec:analysis}
 Per-sample logs are aggregated to per-configuration means across the four repetitions.
-All linear fits in Section~\ref{results} are ordinary least squares of GPU-reported power on the empirical (CalFLOPS-based) MFU, using the raw (non-aggregated) samples.
+All linear fits in Section~\ref{results} are ordinary least squares of GPU-reported power on the empirical (CalFLOPS-based) MFU, fitted on the per-configuration means.
+Only the per-sample error distribution in Figure~\ref{fig:prediction_error} is computed on the raw samples.
 $R^2$ and MAPE = $\text{mean}(|y-\hat{y}|/|y|)$ are reported with 95\,\% confidence intervals from a row-level bootstrap with 2000 resamples.
 
 
@@ -364,14 +367,14 @@ The MI210 is the lone outlier in relative terms: its AMD power telemetry is unus
 \end{tabular}
 \end{table}
 
-\takeaway{Within the compute-bound regime, conditioning the MFU power model on dtype and batch size reduces MAPE from $\sim$10\,\% per-GPU to $\sim$1\,\% per (GPU, dtype, batch) cell, and the resulting residual matches the cross-repeat measurement noise on every NVIDIA GPU. The remaining error is sampling noise, not model misspecification: a more elaborate predictor would yield no measurable accuracy gain.}
+\takeaway{Within compute-bound regimes, conditioning the MFU power model on dtype and batch size reduces MAPE from $\sim$10\,\% per-GPU to $\sim$1\,\% per (GPU, dtype, batch) cell, and the resulting residual matches the cross-repeat measurement noise on every NVIDIA GPU. In-sample, the remaining error is therefore dominated by sampling noise rather than model misspecification, leaving little headroom for a more elaborate predictor within a calibrated cell.}
 
 \subsection{MFU Underestimates Power in Memory-Bound Regimes}\label{sec:failure-modes}
 MFU normalizes throughput by peak FLOPS, so any workload bottlenecked on memory bandwidth rather than arithmetic will execute with low MFU even when power and GPU~Utilization remain high.
 Our search grid already brackets this boundary at its low-arithmetic-intensity end: the batch-1 band visible in Figure~\ref{fig:pred_vs_meas_power} is its signature.
 Table~\ref{tab:batch1_memory_bound} quantifies the gap.
-Going from batch~1 to batch~128, MFU collapses by 36--72$\times$ across the six GPUs while power changes by only $1.1$--$2.0\times$.
-At batch~1, every device runs below 1.3\,\% MFU yet still draws 46--64\,\% of its batch-128 power---and 90\,\% on the L4, where the idle floor dominates the device's envelope.
+Going from batch~1 to batch~128, MFU grows by 36--72$\times$ across the six GPUs while power changes by only $1.1$--$2.0\times$.
+At batch~1, every device runs below 1.3\,\% MFU yet still draws 49--64\,\% of its batch-128 power---and 90\,\% on the L4, where the idle floor dominates the device's envelope.
 A single linear MFU-power slope fit on the broader sweep therefore extrapolates downward through this regime and substantially under-predicts power, with a 70--120\,W absolute error on the data-center cards.
 
 \begin{table}[t]
@@ -412,6 +415,7 @@ We leave an inference evaluation, together with the complementary memory-bandwid
 A second limitation is that all configurations run on a single accelerator, so the fit does not see the inter-device communication component (collectives, pipeline bubbles, FSDP all-gathers) that contributes to power in distributed training.
 This is intentional: we isolate the per-device compute-to-power relation, which is the per-node building block that a multi-GPU simulator composes with its own communication model.
 Prior work on distributed transformer training already characterizes the scaling and communication side of the problem~\cite{fernandez-2024}.
+A cluster simulator reusing our fit must still model communication power and pipeline-bubble idling, and the accuracy of the composed estimate remains to be established.
 
 Lastly, we disabled flash and memory-efficient SDPA kernels in this study and run attention in eager mode across all devices (Section~\ref{sec:execution}).
 Production stacks typically rely on fused attention kernels, which raise arithmetic intensity and shift the achieved MFU.
@@ -445,10 +449,10 @@ However, their estimates rely largely on theoretical efficiency assumptions rath
 The limits of hardware-dependent utilization metrics are particularly evident in performance modeling and simulation.
 Systems such as Vidur~\cite{agrawal-2025} for inference and existing LLM training simulators and performance-modeling toolkits~\cite{simumax, zhebrak2026llmclustersim, liang-2025} model LLM execution from workload structure and parallelization strategies, without access to hardware-level utilization counters.
 Vendor-defined metrics such as GPU Utilization or SM activity therefore cannot feed into the modeling process.
-Training simulators do, however, often report MFU as a performance metric, which makes it a natural integration point for the power model proposed here.
+However, training simulators often report MFU as a performance metric, which makes it a natural integration point for the proposed power model.
 
-To enable energy estimation, Özcan et al.~\cite{ozcan-2025} extend the Vidur framework with utilization-derived power models that infer energy demand from execution characteristics.
-However, these approaches rely on implicit utilization proxies rather than explicitly defined, portable metrics, leaving the choice of utilization abstraction underspecified.
+Özcan et al.~\cite{ozcan-2025} extend Vidur with an MFU-based GPU power model to support energy-aware optimization and for coupling the simulator to co-simulation testbeds like Vessim~\cite{wiesner2024vessim}.
+However, their MFU-based power model is not validated against hardware power measurements. We close this gap for compute-bound LLM training.
 
 \section{Conclusion}\label{Conclusion}
 In this paper, we evaluated MFU as a portable, software-defined power proxy for LLM training across six NVIDIA and AMD GPUs and nearly 3000 runs.
